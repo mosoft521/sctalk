@@ -77,4 +77,24 @@ public class BaseModel<T> {
         this.msg = result.getMessage();
         return this;
     }
+    
+    public static <T> BaseModel<T> ok(T data) {
+    	BaseModel<T> result = new BaseModel<>();
+    	result.setData(data);
+    	return result;
+    }
+    
+    public static <T> BaseModel<T> error(String message) {
+    	BaseModel<T> result = new BaseModel<>();
+    	result.setCode(1);
+    	result.setMsg(message);
+    	return result;
+    }
+    
+    public static <T> BaseModel<T> error(Integer code, String message) {
+    	BaseModel<T> result = new BaseModel<>();
+    	result.setCode(code);
+    	result.setMsg(message);
+    	return result;
+    }
 }
