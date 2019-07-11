@@ -210,8 +210,20 @@ public class MessageServiceController {
             sessionId = sessionService.addSession(messageSendReq.getUserId(), messageSendReq.getToId(),
                     SessionType.SESSION_TYPE_SINGLE_VALUE);
         }
-        
+
         sessionService.update(sessionId, messageSendReq.getCreateTime());
+        
+        // 2019-7-9 update start
+        // 参考\db_proxy_server\business\MessageContent.cpp sendMessage
+        long peersessionId = sessionService.getSessionId(messageSendReq.getToId(), messageSendReq.getUserId(), 
+                SessionType.SESSION_TYPE_SINGLE_VALUE, false);
+        if (peersessionId == DBConstant.INVALIAD_VALUE) {
+        	peersessionId = sessionService.addSession(messageSendReq.getToId(), messageSendReq.getUserId(),
+                    SessionType.SESSION_TYPE_SINGLE_VALUE);
+        }
+
+        // 2019-7-9 update end
+        sessionService.update(peersessionId, messageSendReq.getCreateTime());
 
         // 计数
         // 存储用户信息及未读信息
@@ -305,7 +317,10 @@ public class MessageServiceController {
         SearchCriteria<IMMessage> messageSearchCriteria = new SearchCriteria<>();
         messageSearchCriteria.add(JpaRestrictions.eq("status", DBConstant.DELETE_STATUS_OK, false));
         messageSearchCriteria.add(JpaRestrictions.eq("relateId", relateId, false));
-        messageSearchCriteria.add(JpaRestrictions.lte("msgId", messageId, false));
+        if (messageId > 0) {
+        	//当消息ID参数指定了的时候
+        	messageSearchCriteria.add(JpaRestrictions.lte("msgId", messageId, false));
+        }
         Sort sortMessage = new Sort(Sort.Direction.DESC, "created", "id");
         Pageable pageable = new PageRequest(0, messageCount, sortMessage);
         Page<IMMessage> messagePageList = messageRepository.findAll(messageSearchCriteria, pageable);
@@ -339,7 +354,10 @@ public class MessageServiceController {
         SearchCriteria<IMGroupMessage> groupMessageSearchCriteria = new SearchCriteria<>();
         groupMessageSearchCriteria.add(JpaRestrictions.eq("groupId", groupId, false));
         groupMessageSearchCriteria.add(JpaRestrictions.eq("status", DBConstant.DELETE_STATUS_OK, false));
-        groupMessageSearchCriteria.add(JpaRestrictions.lte("msgId", messageId, false));
+        if (messageId > 0) {
+        	//当消息ID参数指定了的时候
+        	groupMessageSearchCriteria.add(JpaRestrictions.lte("msgId", messageId, false));
+        }
         Sort sortMessage = new Sort(Sort.Direction.DESC, "created", "id");
         Pageable pageable = new PageRequest(0, messageCount, sortMessage);
         Page<IMGroupMessage> groupMessageList =
